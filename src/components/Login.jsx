@@ -1,23 +1,36 @@
 import { useState } from 'react';
 import { Flame, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 
-export const Login = ({ onSignIn, onSignUp, loading, error }) => {
-  const [isSignUp, setIsSignUp] = useState(false);
+export const Login = ({ onSignIn, onSignUp, onResetPassword, loading, error }) => {
+  const [mode, setMode] = useState('signIn'); // 'signIn', 'signUp', 'forgotPassword'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [localError, setLocalError] = useState('');
+  const [resetSent, setResetSent] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLocalError('');
+
+    if (mode === 'forgotPassword') {
+      if (!email) {
+        setLocalError('Please enter your email');
+        return;
+      }
+      const { error } = await onResetPassword(email);
+      if (!error) {
+        setResetSent(true);
+      }
+      return;
+    }
 
     if (!email || !password) {
       setLocalError('Please fill in all fields');
       return;
     }
 
-    if (isSignUp) {
+    if (mode === 'signUp') {
       if (password !== confirmPassword) {
         setLocalError('Passwords do not match');
         return;
@@ -63,7 +76,7 @@ export const Login = ({ onSignIn, onSignUp, loading, error }) => {
             TrainPeak
           </h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-            {isSignUp ? 'Create your account' : 'Sign in to continue'}
+            {mode === 'signUp' ? 'Create your account' : mode === 'forgotPassword' ? 'Reset your password' : 'Sign in to continue'}
           </p>
         </div>
 
@@ -99,36 +112,52 @@ export const Login = ({ onSignIn, onSignUp, loading, error }) => {
           </div>
 
           {/* Password */}
-          <div>
-            <label
-              className="block text-sm font-medium mb-2"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              Password
-            </label>
-            <div className="relative">
-              <Lock
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5"
-                style={{ color: 'var(--text-muted)' }}
-              />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                className="w-full pl-10 pr-4 py-3 rounded-lg outline-none transition-all"
-                style={{
-                  backgroundColor: 'var(--bg-elevated)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-primary)',
-                }}
-              />
+          {mode !== 'forgotPassword' && (
+            <div>
+              <label
+                className="block text-sm font-medium mb-2"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Password
+              </label>
+              <div className="relative">
+                <Lock
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5"
+                  style={{ color: 'var(--text-muted)' }}
+                />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  autoComplete={mode === 'signUp' ? 'new-password' : 'current-password'}
+                  className="w-full pl-10 pr-4 py-3 rounded-lg outline-none transition-all"
+                  style={{
+                    backgroundColor: 'var(--bg-elevated)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text-primary)',
+                  }}
+                />
+              </div>
+              {mode === 'signIn' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('forgotPassword');
+                    setLocalError('');
+                    setResetSent(false);
+                  }}
+                  className="text-sm mt-2 hover:underline"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  Forgot password?
+                </button>
+              )}
             </div>
-          </div>
+          )}
 
           {/* Confirm Password (Sign Up only) */}
-          {isSignUp && (
+          {mode === 'signUp' && (
             <div>
               <label
                 className="block text-sm font-medium mb-2"
@@ -158,8 +187,22 @@ export const Login = ({ onSignIn, onSignUp, loading, error }) => {
             </div>
           )}
 
+          {/* Success Message for Reset */}
+          {resetSent && (
+            <div
+              className="p-3 rounded-lg text-sm"
+              style={{
+                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                color: '#22c55e',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
+              }}
+            >
+              Check your email for a password reset link!
+            </div>
+          )}
+
           {/* Error Message */}
-          {displayError && (
+          {displayError && !resetSent && (
             <div
               className="p-3 rounded-lg text-sm"
               style={{
@@ -177,41 +220,57 @@ export const Login = ({ onSignIn, onSignUp, loading, error }) => {
           )}
 
           {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-            style={{
-              background: 'linear-gradient(135deg, #fc4c02, #ff6b2b)',
-              color: 'white',
-            }}
-          >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <>
-                {isSignUp ? 'Create Account' : 'Sign In'}
-                <ArrowRight className="w-5 h-5" />
-              </>
-            )}
-          </button>
+          {!resetSent && (
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              style={{
+                background: 'linear-gradient(135deg, #fc4c02, #ff6b2b)',
+                color: 'white',
+              }}
+            >
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  {mode === 'signUp' ? 'Create Account' : mode === 'forgotPassword' ? 'Send Reset Link' : 'Sign In'}
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
+            </button>
+          )}
         </form>
 
-        {/* Toggle Sign In / Sign Up */}
+        {/* Toggle Sign In / Sign Up / Back to Sign In */}
         <div className="mt-6 text-center">
-          <p style={{ color: 'var(--text-muted)' }}>
-            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+          {mode === 'forgotPassword' ? (
             <button
               onClick={() => {
-                setIsSignUp(!isSignUp);
+                setMode('signIn');
                 setLocalError('');
+                setResetSent(false);
               }}
               className="font-medium hover:underline"
               style={{ color: '#fc4c02' }}
             >
-              {isSignUp ? 'Sign In' : 'Sign Up'}
+              Back to Sign In
             </button>
-          </p>
+          ) : (
+            <p style={{ color: 'var(--text-muted)' }}>
+              {mode === 'signUp' ? 'Already have an account?' : "Don't have an account?"}{' '}
+              <button
+                onClick={() => {
+                  setMode(mode === 'signUp' ? 'signIn' : 'signUp');
+                  setLocalError('');
+                }}
+                className="font-medium hover:underline"
+                style={{ color: '#fc4c02' }}
+              >
+                {mode === 'signUp' ? 'Sign In' : 'Sign Up'}
+              </button>
+            </p>
+          )}
         </div>
       </div>
     </div>

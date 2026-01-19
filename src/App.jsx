@@ -127,6 +127,7 @@ function App() {
       <Login
         onSignIn={auth.signIn}
         onSignUp={auth.signUp}
+        onResetPassword={auth.resetPassword}
         loading={auth.loading}
         error={auth.error}
       />
