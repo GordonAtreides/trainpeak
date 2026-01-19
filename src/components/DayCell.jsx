@@ -42,8 +42,8 @@ const DraggableWorkoutItem = ({ workout, onClick }) => {
       ref={setNodeRef}
       style={{
         ...style,
-        backgroundColor: completed ? 'var(--bg-elevated)' : 'transparent',
-        border: completed ? '1px solid var(--border-light)' : '1px dashed var(--border-light)',
+        backgroundColor: completed ? 'rgba(34, 197, 94, 0.1)' : 'transparent',
+        border: completed ? '1px solid rgba(34, 197, 94, 0.3)' : '1px dashed var(--border-light)',
       }}
       className={`
         p-2.5 rounded-lg transition-all cursor-pointer
