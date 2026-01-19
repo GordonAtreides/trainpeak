@@ -1,12 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { CheckCircle, XCircle, Loader } from 'lucide-react';
 
 export const StravaCallback = ({ onSuccess, onError }) => {
   const [status, setStatus] = useState('processing'); // processing, success, error
   const [message, setMessage] = useState('Connecting to Strava...');
+  const hasProcessed = useRef(false);
 
   useEffect(() => {
     const handleCallback = async () => {
+      // Prevent double-processing (OAuth codes are single-use)
+      if (hasProcessed.current) return;
+      hasProcessed.current = true;
       const params = new URLSearchParams(window.location.search);
       const code = params.get('code');
       const error = params.get('error');
