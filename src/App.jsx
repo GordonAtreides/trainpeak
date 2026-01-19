@@ -40,7 +40,7 @@ function App() {
     clearSampleData,
     mergeStravaActivities,
     loadTrainingPlan,
-  } = useWorkouts();
+  } = useWorkouts(auth.user?.id);
 
   // Handle Strava activity sync
   const handleStravaSync = useCallback((stravaWorkouts) => {
@@ -49,7 +49,7 @@ function App() {
 
   const strava = useStrava(handleStravaSync);
 
-  const { templates, addTemplate } = useTemplates();
+  const { templates, addTemplate } = useTemplates(auth.user?.id);
 
   // Check if this is an OAuth callback
   useEffect(() => {
@@ -69,7 +69,7 @@ function App() {
 
   // Race goal hook - use current week's average TSS as base
   const avgWeeklyTSS = metrics.weeklyTSS?.completed || 300;
-  const raceGoalHook = useRaceGoal(metrics.ctl, avgWeeklyTSS);
+  const raceGoalHook = useRaceGoal(metrics.ctl, avgWeeklyTSS, auth.user?.id);
 
   // Guardrails hook - pass weekly target if race goal is set
   const weeklyTarget = raceGoalHook.weekTarget?.targetTSS || null;

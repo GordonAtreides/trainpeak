@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const STORAGE_KEY = 'trainpeak_templates';
+const getStorageKey = (userId) => `trainpeak_templates_${userId}`;
 
 const DEFAULT_TEMPLATES = [
   {
@@ -95,13 +95,20 @@ const DEFAULT_TEMPLATES = [
   },
 ];
 
-export const useTemplates = () => {
+export const useTemplates = (userId) => {
   const [templates, setTemplates] = useState([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load templates from localStorage on mount
+  // Load templates from localStorage when userId changes
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!userId) {
+      setTemplates(DEFAULT_TEMPLATES);
+      setIsLoaded(false);
+      return;
+    }
+
+    const storageKey = getStorageKey(userId);
+    const stored = localStorage.getItem(storageKey);
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -117,14 +124,15 @@ export const useTemplates = () => {
       setTemplates(DEFAULT_TEMPLATES);
     }
     setIsLoaded(true);
-  }, []);
+  }, [userId]);
 
   // Save to localStorage whenever templates change
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
+    if (isLoaded && userId) {
+      const storageKey = getStorageKey(userId);
+      localStorage.setItem(storageKey, JSON.stringify(templates));
     }
-  }, [templates, isLoaded]);
+  }, [templates, isLoaded, userId]);
 
   const addTemplate = useCallback((template) => {
     const newTemplate = {

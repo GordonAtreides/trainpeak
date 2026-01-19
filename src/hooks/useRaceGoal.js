@@ -7,16 +7,23 @@ import {
   calculateProjectedCTL,
 } from '../utils/raceGoalCalculations';
 
-const STORAGE_KEY = 'trainpeak_race_goal';
+const getStorageKey = (userId) => `trainpeak_race_goal_${userId}`;
 
-export const useRaceGoal = (currentCTL = 0, baseTSS = 0) => {
+export const useRaceGoal = (currentCTL = 0, baseTSS = 0, userId = null) => {
   const [raceGoal, setRaceGoal] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load from localStorage on mount
+  // Load from localStorage when userId changes
   useEffect(() => {
+    if (!userId) {
+      setRaceGoal(null);
+      setIsLoaded(false);
+      return;
+    }
+
+    const storageKey = getStorageKey(userId);
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(storageKey);
       if (stored) {
         const parsed = JSON.parse(stored);
         // Check if race is still in the future
@@ -25,25 +32,26 @@ export const useRaceGoal = (currentCTL = 0, baseTSS = 0) => {
           setRaceGoal(parsed);
         } else {
           // Clear past races
-          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(storageKey);
         }
       }
     } catch (error) {
       console.error('Error loading race goal:', error);
     }
     setIsLoaded(true);
-  }, []);
+  }, [userId]);
 
   // Save to localStorage when race goal changes
   useEffect(() => {
-    if (isLoaded) {
+    if (isLoaded && userId) {
+      const storageKey = getStorageKey(userId);
       if (raceGoal) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(raceGoal));
+        localStorage.setItem(storageKey, JSON.stringify(raceGoal));
       } else {
-        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(storageKey);
       }
     }
-  }, [raceGoal, isLoaded]);
+  }, [raceGoal, isLoaded, userId]);
 
   // Set a new race goal
   const setGoal = useCallback((raceName, raceDate, raceType = 'run') => {

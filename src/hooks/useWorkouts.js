@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-const STORAGE_KEY = 'trainpeak_workouts';
+const getStorageKey = (userId) => `trainpeak_workouts_${userId}`;
 
 // Sample data for first-time users
 const getSampleWorkouts = () => {
@@ -44,35 +44,43 @@ const getSampleWorkouts = () => {
   return workouts;
 };
 
-export const useWorkouts = () => {
+export const useWorkouts = (userId) => {
   const [workouts, setWorkouts] = useState([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load workouts from localStorage on mount
+  // Load workouts from localStorage when userId changes
   useEffect(() => {
+    if (!userId) {
+      setWorkouts([]);
+      setIsLoaded(false);
+      return;
+    }
+
+    const storageKey = getStorageKey(userId);
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(storageKey);
       if (stored) {
         setWorkouts(JSON.parse(stored));
       } else {
         // First time user - load sample data
         const sampleWorkouts = getSampleWorkouts();
         setWorkouts(sampleWorkouts);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(sampleWorkouts));
+        localStorage.setItem(storageKey, JSON.stringify(sampleWorkouts));
       }
     } catch (error) {
       console.error('Error loading workouts:', error);
       setWorkouts([]);
     }
     setIsLoaded(true);
-  }, []);
+  }, [userId]);
 
   // Save to localStorage whenever workouts change
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(workouts));
+    if (isLoaded && userId) {
+      const storageKey = getStorageKey(userId);
+      localStorage.setItem(storageKey, JSON.stringify(workouts));
     }
-  }, [workouts, isLoaded]);
+  }, [workouts, isLoaded, userId]);
 
   // Get workout for a specific date
   const getWorkoutByDate = useCallback((date) => {
@@ -132,8 +140,10 @@ export const useWorkouts = () => {
   // Clear all data (for testing)
   const clearAll = useCallback(() => {
     setWorkouts([]);
-    localStorage.removeItem(STORAGE_KEY);
-  }, []);
+    if (userId) {
+      localStorage.removeItem(getStorageKey(userId));
+    }
+  }, [userId]);
 
   // Reset to sample data
   const resetToSample = useCallback(() => {
