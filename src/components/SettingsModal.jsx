@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Link2, Unlink, RefreshCw, AlertCircle, CheckCircle, Target, Trash2, Calendar, Dumbbell } from 'lucide-react';
 import { triathlon703Plan, generateWorkoutsFromPlan } from '../data/triathlon703Plan';
+import { ben703Plan, generateWorkoutsFromBenPlan } from '../data/ben703Plan';
 
 export const SettingsModal = ({
   isOpen,
@@ -15,6 +16,7 @@ export const SettingsModal = ({
   const [raceType, setRaceType] = useState('run');
   const [planLoading, setPlanLoading] = useState(false);
   const [planLoaded, setPlanLoaded] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState('ben12'); // 'ben12' or 'generic18'
 
   if (!isOpen) return null;
 
@@ -41,7 +43,12 @@ export const SettingsModal = ({
 
     setPlanLoading(true);
     try {
-      const workouts = generateWorkoutsFromPlan(triathlon703Plan, raceGoal.raceGoal.raceDate);
+      let workouts;
+      if (selectedPlan === 'ben12') {
+        workouts = generateWorkoutsFromBenPlan(ben703Plan, raceGoal.raceGoal.raceDate);
+      } else {
+        workouts = generateWorkoutsFromPlan(triathlon703Plan, raceGoal.raceGoal.raceDate);
+      }
       onLoadTrainingPlan(workouts);
       setPlanLoaded(true);
       setTimeout(() => setPlanLoaded(false), 3000);
@@ -50,6 +57,29 @@ export const SettingsModal = ({
     }
     setPlanLoading(false);
   };
+
+  const plans = [
+    {
+      id: 'ben12',
+      plan: ben703Plan,
+      phases: [
+        { label: 'Weeks 1-4: Build 1', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)' },
+        { label: 'Weeks 5-8: Build 2', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)' },
+        { label: 'Weeks 9-10: Peak', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)' },
+        { label: 'Weeks 11-12: Taper', color: '#0ea5e9', bg: 'rgba(14, 165, 233, 0.15)' },
+      ],
+    },
+    {
+      id: 'generic18',
+      plan: triathlon703Plan,
+      phases: [
+        { label: 'Weeks 1-6: Base', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)' },
+        { label: 'Weeks 7-12: Build', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)' },
+        { label: 'Weeks 13-16: Peak', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)' },
+        { label: 'Weeks 17-18: Taper', color: '#0ea5e9', bg: 'rgba(14, 165, 233, 0.15)' },
+      ],
+    },
+  ];
 
   const inputStyle = {
     backgroundColor: 'var(--bg-elevated)',
@@ -378,78 +408,92 @@ VITE_STRAVA_REDIRECT_URI=http://localhost:5173/callback`}
                     Training Plan
                   </h3>
 
-                  <div
-                    className="p-4 rounded-lg"
-                    style={{
-                      backgroundColor: 'var(--bg-card)',
-                      border: '1px solid var(--border)',
-                    }}
-                  >
-                    <div className="flex items-start gap-4">
+                  <div className="space-y-3">
+                    {plans.map(({ id, plan, phases }) => (
                       <div
-                        className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
+                        key={id}
+                        onClick={() => setSelectedPlan(id)}
+                        className="p-4 rounded-lg cursor-pointer transition-all"
+                        style={{
+                          backgroundColor: 'var(--bg-card)',
+                          border: selectedPlan === id
+                            ? '2px solid #10b981'
+                            : '1px solid var(--border)',
+                        }}
                       >
-                        <Calendar className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold" style={{ color: 'var(--text-primary)' }}>{triathlon703Plan.name}</h4>
-                        <p className="text-sm text-zinc-400 mt-1">
-                          {triathlon703Plan.description}
-                        </p>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          <span className="px-2 py-0.5 text-xs rounded-full" style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
-                            Weeks 1-6: Base
-                          </span>
-                          <span className="px-2 py-0.5 text-xs rounded-full" style={{ backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
-                            Weeks 7-12: Build
-                          </span>
-                          <span className="px-2 py-0.5 text-xs rounded-full" style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>
-                            Weeks 13-16: Peak
-                          </span>
-                          <span className="px-2 py-0.5 text-xs rounded-full" style={{ backgroundColor: 'rgba(14, 165, 233, 0.15)', color: '#0ea5e9' }}>
-                            Weeks 17-18: Taper
-                          </span>
+                        <div className="flex items-start gap-4">
+                          <div
+                            className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
+                            style={{
+                              background: selectedPlan === id
+                                ? 'linear-gradient(135deg, #10b981, #059669)'
+                                : 'var(--bg-elevated)',
+                            }}
+                          >
+                            <Calendar className="w-6 h-6" style={{ color: selectedPlan === id ? 'white' : '#71717a' }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold" style={{ color: 'var(--text-primary)' }}>{plan.name}</h4>
+                              {selectedPlan === id && (
+                                <CheckCircle size={16} className="text-emerald-500" />
+                              )}
+                            </div>
+                            <p className="text-sm text-zinc-400 mt-1">
+                              {plan.description}
+                            </p>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {phases.map((phase, idx) => (
+                                <span
+                                  key={idx}
+                                  className="px-2 py-0.5 text-xs rounded-full"
+                                  style={{ backgroundColor: phase.bg, color: phase.color }}
+                                >
+                                  {phase.label}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-
-                    <button
-                      onClick={handleLoadPlan}
-                      disabled={planLoading}
-                      className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all"
-                      style={{
-                        background: planLoaded
-                          ? 'rgba(34, 197, 94, 0.2)'
-                          : planLoading
-                          ? 'var(--bg-elevated)'
-                          : 'linear-gradient(135deg, #10b981, #059669)',
-                        color: planLoaded ? '#22c55e' : planLoading ? '#71717a' : 'white',
-                        border: planLoaded ? '1px solid rgba(34, 197, 94, 0.3)' : 'none',
-                      }}
-                    >
-                      {planLoaded ? (
-                        <>
-                          <CheckCircle size={18} />
-                          Plan Loaded!
-                        </>
-                      ) : planLoading ? (
-                        <>
-                          <RefreshCw size={18} className="animate-spin" />
-                          Loading...
-                        </>
-                      ) : (
-                        <>
-                          <Calendar size={18} />
-                          Load 18-Week Plan
-                        </>
-                      )}
-                    </button>
-
-                    <p className="text-xs text-zinc-600 mt-2 text-center">
-                      This will add {triathlon703Plan.totalWeeks * 7} workouts to your calendar
-                    </p>
+                    ))}
                   </div>
+
+                  <button
+                    onClick={handleLoadPlan}
+                    disabled={planLoading}
+                    className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all"
+                    style={{
+                      background: planLoaded
+                        ? 'rgba(34, 197, 94, 0.2)'
+                        : planLoading
+                        ? 'var(--bg-elevated)'
+                        : 'linear-gradient(135deg, #10b981, #059669)',
+                      color: planLoaded ? '#22c55e' : planLoading ? '#71717a' : 'white',
+                      border: planLoaded ? '1px solid rgba(34, 197, 94, 0.3)' : 'none',
+                    }}
+                  >
+                    {planLoaded ? (
+                      <>
+                        <CheckCircle size={18} />
+                        Plan Loaded!
+                      </>
+                    ) : planLoading ? (
+                      <>
+                        <RefreshCw size={18} className="animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        <Calendar size={18} />
+                        Load {selectedPlan === 'ben12' ? '12' : '18'}-Week Plan
+                      </>
+                    )}
+                  </button>
+
+                  <p className="text-xs text-zinc-600 mt-2 text-center">
+                    This will add {(selectedPlan === 'ben12' ? ben703Plan : triathlon703Plan).totalWeeks * 7} workouts to your calendar
+                  </p>
                 </div>
               </>
             )}
