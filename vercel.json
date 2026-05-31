@@ -1,5 +1,14 @@
 {
   "rewrites": [
     { "source": "/(.*)", "destination": "/" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Frame-Options", "value": "ALLOW-FROM https://personal-os-ashy-one.vercel.app" },
+        { "key": "Content-Security-Policy", "value": "frame-ancestors https://personal-os-ashy-one.vercel.app" }
+      ]
+    }
   ]
 }
