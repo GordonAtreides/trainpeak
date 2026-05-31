@@ -90,18 +90,20 @@ export const useAuth = () => {
     }
   }, []);
 
-  // Reset password
-  const resetPassword = useCallback(async (email) => {
+  const signInWithGoogle = useCallback(async () => {
     setError(null);
+    setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: 'https://trainpeak.vercel.app',
+        },
       });
       if (error) throw error;
-      return { error: null };
     } catch (err) {
       setError(err.message);
-      return { error: err };
+      setLoading(false);
     }
   }, []);
 
@@ -113,7 +115,7 @@ export const useAuth = () => {
     signUp,
     signIn,
     signOut,
-    resetPassword,
+    signInWithGoogle,
     isAuthenticated: !!user,
   };
 };

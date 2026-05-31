@@ -126,9 +126,7 @@ function App() {
   if (!auth.isAuthenticated) {
     return (
       <Login
-        onSignIn={auth.signIn}
-        onSignUp={auth.signUp}
-        onResetPassword={auth.resetPassword}
+        onSignInWithGoogle={auth.signInWithGoogle}
         loading={auth.loading}
         error={auth.error}
       />
